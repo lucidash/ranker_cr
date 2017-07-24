@@ -1,0 +1,7 @@
+.idea/
+rankerScraper/
+.venv/
+node_properties/
+images/
+nodes.tmp.json
+__top2000.json
