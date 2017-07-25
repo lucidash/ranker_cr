@@ -55,7 +55,6 @@ def tmp():
 
 
 async def get_images(url):
-    print (url)
     async with aiohttp.ClientSession() as session:
         try:
             with async_timeout.timeout(10):
@@ -69,23 +68,6 @@ async def get_images(url):
             print(err)
             return {'error': err, 'html': ''}
 
-
-@asyncio.coroutine
-def download(url, file_name, session, semaphore, chunk_size=1<<15):
-    with (yield from semaphore): # limit number of concurrent downloads
-        filename = "./images/{0}.jpg".format(file_name)
-        logging.info('downloading %s', filename)
-        response = yield from session.get(url)
-        with closing(response), open(filename, 'wb') as file:
-            while True: # save file
-                chunk = yield from response.content.read(chunk_size)
-                if not chunk:
-                    break
-                file.write(chunk)
-        logging.info('done %s', filename)
-    return filename, (response.status, tuple(response.headers.items()))
-
-
 async def handle_task(task_id, work_queue):
     while not work_queue.empty():
         image_url, file_name = await work_queue.get()
@@ -96,7 +78,7 @@ async def handle_task(task_id, work_queue):
             f.write(im)
             f.close()
         else:
-            pass
+            work_queue.put_nowait((image_url, file_name))
             # print(image_url)
             # print('error occured')
 
@@ -105,7 +87,7 @@ if __name__ == "__main__":
 
     urls = []
     q = asyncio.Queue()
-    for i in range(1000):
+    for i in range(len(v)):
         q.put_nowait((v[i]['image_url'], v[i]['file_name']))
         # urls.append( (v[i]['image_url'], v[i]['file_name']) )
 
