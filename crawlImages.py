@@ -9,6 +9,7 @@ import aiohttp # $ pip install aiohttp
 import wget
 import json
 import os
+from pathlib import import Path
 
 v = []
 
@@ -87,9 +88,14 @@ if __name__ == "__main__":
 
     urls = []
     q = asyncio.Queue()
+    print (len(v))
     for i in range(len(v)):
-        q.put_nowait((v[i]['image_url'], v[i]['file_name']))
+        # q.put_nowait((v[i]['image_url'], v[i]['file_name']))
         # urls.append( (v[i]['image_url'], v[i]['file_name']) )
+        my_file = Path("./images/{0}.jpg".format(v[i]['file_name']))
+        if not my_file.is_file():
+            print (v[i]['image_url'])
+            
 
     loop = asyncio.get_event_loop()
     tasks = [handle_task(task_id, q) for task_id in range(1,20)]
