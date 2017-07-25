@@ -9,7 +9,7 @@ import aiohttp # $ pip install aiohttp
 import wget
 import json
 import os
-from pathlib import import Path
+from pathlib import  Path
 
 v = []
 
@@ -92,9 +92,14 @@ if __name__ == "__main__":
     for i in range(len(v)):
         # q.put_nowait((v[i]['image_url'], v[i]['file_name']))
         # urls.append( (v[i]['image_url'], v[i]['file_name']) )
-        my_file = Path("./images/{0}.jpg".format(v[i]['file_name']))
-        if not my_file.is_file():
-            print (v[i]['image_url'])
+        try: 
+            my_file = Path("./images/{0}.jpg".format(v[i]['file_name']))
+            if my_file.is_file():
+                print ('too long')
+        except Exception as e:
+            print(v[i]['file_name'])
+            print(e)
+            
             
 
     loop = asyncio.get_event_loop()
