@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from scrapy.selector import Selector
 import asyncio
+import async_timeout
 import logging
 from contextlib import closing
 import aiohttp # $ pip install aiohttp
@@ -10,6 +11,8 @@ import json
 import os
 
 v = []
+
+headers = {'user-agent': 'Opera/9.80 (X11; Linux x86_64; U; en) Presto/2.2.15 Version/10.10'}
 
 def init_from_file():
     f = open('images_array.json', 'r')
@@ -50,14 +53,21 @@ def tmp():
     f.write(json.dumps(image_cnt))
     f.close()
 
-async def download_images(image_url, file_name):
+
+async def get_images(url):
+    print (url)
     async with aiohttp.ClientSession() as session:
         try:
             with async_timeout.timeout(10):
-                download(image_url, file_name, session)
-                return {'error': 200}
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        res = await response.read()
+                        return {'error': 200, 'images': res}
+                    else:
+                        return {'error': response.status, 'html': ''}
         except Exception as err:
-            return {'error': err }
+            print(err)
+            return {'error': err, 'html': ''}
 
 
 @asyncio.coroutine
@@ -79,24 +89,27 @@ def download(url, file_name, session, semaphore, chunk_size=1<<15):
 async def handle_task(task_id, work_queue):
     while not work_queue.empty():
         image_url, file_name = await work_queue.get()
-        res = await download_images(image_url, file_name)
+        res = await get_images(image_url)
         if res['error'] == 200:
-            pass
+            im = res['images']
+            f = open(f'./images/{file_name}.jpg', 'wb')
+            f.write(im)
+            f.close()
         else:
-            print(image_url)
-            print('error occured')
+            pass
+            # print(image_url)
+            # print('error occured')
 
 if __name__ == "__main__":
     init_from_file()
 
     urls = []
-    for i in range(10000):
-        urls.append( (v[i]['image_url'], v[i]['file_name']) )
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-    with closing(aiohttp.ClientSession()) as session:
-        loop = asyncio.get_event_loop()
-        semaphore = asyncio.Semaphore(10)
-        download_tasks = (download(x, y, session, semaphore) for x, y in urls)
-        result = loop.run_until_complete(asyncio.gather(*download_tasks))
-        loop.run_until_complete(asyncio.sleep(1))
-        loop.close()
+    q = asyncio.Queue()
+    for i in range(1000):
+        q.put_nowait((v[i]['image_url'], v[i]['file_name']))
+        # urls.append( (v[i]['image_url'], v[i]['file_name']) )
+
+    loop = asyncio.get_event_loop()
+    tasks = [handle_task(task_id, q) for task_id in range(1,20)]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
