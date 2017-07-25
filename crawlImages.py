@@ -88,19 +88,12 @@ if __name__ == "__main__":
 
     urls = []
     q = asyncio.Queue()
-    print (len(v))
-    for i in range(len(v)):
-        # q.put_nowait((v[i]['image_url'], v[i]['file_name']))
+
+    long_file_name_list = [2766, 14253, 16761, 20132, 44815, 45333, 46535, 61436, 61443, 86789, 86961, 89853, 90246, 90936, 90938, 90941, 90942]
+
+    for i in long_file_name_list:
+        q.put_nowait((v[i]['image_url'], v[i]['file_name']))
         # urls.append( (v[i]['image_url'], v[i]['file_name']) )
-        try: 
-            my_file = Path("./images/{0}.jpg".format(v[i]['file_name']))
-            if my_file.is_file():
-                print ('too long')
-        except Exception as e:
-            print(v[i]['file_name'])
-            print(e)
-            
-            
 
     loop = asyncio.get_event_loop()
     tasks = [handle_task(task_id, q) for task_id in range(1,20)]
