@@ -75,13 +75,16 @@ async def handle_task(task_id, work_queue):
         res = await get_images(image_url)
         if res['error'] == 200:
             im = res['images']
-            f = open("./images/{0}.jpg".format(file_name), 'wb')
-            f.write(im)
-            f.close()
+            try:
+                f = open("./images/{0}.jpg".format(file_name), 'wb')
+                f.write(im)
+                f.close()
+            except Exception as e:
+                print(e)
         else:
             work_queue.put_nowait((image_url, file_name))
-            # print(image_url)
-            # print('error occured')
+            print('error occured')
+            print(res['error'])
 
 if __name__ == "__main__":
     init_from_file()
